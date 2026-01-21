@@ -2,32 +2,34 @@ name: Daily News Bot 🤖
 
 on:
   schedule:
-    # 設定每天 UTC 時間 00:00 執行 (台灣時間早上 08:00)
-    - cron: '0 0 * * *'
-  # 讓我們可以手動按按鈕測試，不用傻傻等明天
-  workflow_dispatch:
+    - cron: '0 0 * * *' # 每天 UTC 00:00 (台灣 08:00)
+  workflow_dispatch:      # 允許手動測試
 
 jobs:
   run-news-bot:
-    runs-on: ubuntu-latest  # 借用一台最新的 Linux 電腦
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Check out code (下載程式碼)
+      - name: Check out code
         uses: actions/checkout@v3
 
-      - name: Set up Python (安裝 Python)
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      - name: Install libraries (安裝需要的套件)
+      - name: Install libraries
         run: |
           pip install requests beautifulsoup4 deep-translator
 
-      - name: Run bot (執行程式)
+      - name: Run bot
+        # 🔑 這裡就是關鍵！我們把 Secrets 變成環境變數傳給 Python
+        env:
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         run: python main.py
 
-      - name: Upload Report (保存新聞檔案)
+      - name: Upload Report
         uses: actions/upload-artifact@v4
         with:
           name: daily-news-report
