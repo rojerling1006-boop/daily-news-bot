@@ -8,24 +8,29 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 
-# --- 設定區 (精選 16 個新聞來源) ---
+# --- 設定區 (精選穩定來源: 14 個) ---
 news_sources = [
+    # === 美洲 ===
     { "name": "AP News (美聯社)", "url": "https://apnews.com/hub/world-news", "tag": "h3", "root": "https://apnews.com" },
     { "name": "CNN", "url": "https://edition.cnn.com/world", "tag": "span", "root": "https://edition.cnn.com" },
-    { "name": "BBC News", "url": "https://www.bbc.com/news", "tag": "h2", "root": "https://www.bbc.com" },
-    { "name": "The Guardian (衛報)", "url": "https://www.theguardian.com/international", "tag": "h3", "root": "" },
     { "name": "NPR (美國公共廣播)", "url": "https://www.npr.org/sections/news/", "tag": "h2", "root": "" },
-    { "name": "Al Jazeera (半島電視台)", "url": "https://www.aljazeera.com/news/", "tag": "h3", "root": "https://www.aljazeera.com" },
-    { "name": "Nature (科學期刊)", "url": "https://www.nature.com/news", "tag": "h3", "root": "" },
     { "name": "The New York Times (紐約時報)", "url": "https://www.nytimes.com/section/world", "tag": "h3", "root": "https://www.nytimes.com" },
-    { "name": "The Washington Post (華盛頓郵報)", "url": "https://www.washingtonpost.com/world", "tag": "h2", "root": "" },
-    { "name": "Nikkei Asia (日經)", "url": "https://asia.nikkei.com/", "tag": "h4", "root": "https://asia.nikkei.com" }, 
-    { "name": "Le Monde (世界報)", "url": "https://www.lemonde.fr/en/", "tag": "h3", "root": "" },
-    { "name": "Der Spiegel (明鏡周刊)", "url": "https://www.spiegel.de/international/", "tag": "h3", "root": "" },
+    
+    # === 歐洲 ===
+    { "name": "BBC News (英國)", "url": "https://www.bbc.com/news", "tag": "h2", "root": "https://www.bbc.com" },
+    { "name": "The Guardian (衛報)", "url": "https://www.theguardian.com/international", "tag": "h3", "root": "" },
     { "name": "Deutsche Welle (德國之聲)", "url": "https://www.dw.com/en/top-stories/s-9097", "tag": "h3", "root": "https://www.dw.com" },
-    { "name": "El País (國家報)", "url": "https://english.elpais.com/", "tag": "h2", "root": "https://english.elpais.com" },
+    { "name": "France 24 (法國)", "url": "https://www.france24.com/en/", "tag": "p", "root": "https://www.france24.com" }, # 新增替代來源
+    { "name": "El País (西班牙)", "url": "https://english.elpais.com/", "tag": "h2", "root": "https://english.elpais.com" },
+
+    # === 亞洲與中東 ===
+    { "name": "Al Jazeera (半島電視台)", "url": "https://www.aljazeera.com/news/", "tag": "h3", "root": "https://www.aljazeera.com" },
+    { "name": "The Japan Times (日本時報)", "url": "https://www.japantimes.co.jp/news/world/", "tag": "h3", "root": "" }, # 新增替代來源
+    { "name": "SCMP (南華早報)", "url": "https://www.scmp.com/news/world", "tag": "h2", "root": "https://www.scmp.com" },
     { "name": "Xinhua (新華社)", "url": "https://english.news.cn/", "tag": "span", "root": "" },
-    { "name": "SCMP (南華早報)", "url": "https://www.scmp.com/news/world", "tag": "h2", "root": "https://www.scmp.com" }
+
+    # === 科學 ===
+    { "name": "Nature (科學期刊)", "url": "https://www.nature.com/news", "tag": "h3", "root": "" }
 ]
 
 translator = GoogleTranslator(source='auto', target='zh-TW')
