@@ -8,23 +8,31 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 
-# --- 設定區 (精選穩定來源 14 個) ---
+# --- 設定區 (精選穩定來源 14 個 - 已修復歐洲與日本來源) ---
 news_sources = [
+    # === 美洲 ===
     { "name": "AP News (美聯社)", "url": "https://apnews.com/hub/world-news", "tag": "h3", "root": "https://apnews.com" },
     { "name": "CNN", "url": "https://edition.cnn.com/world", "tag": "span", "root": "https://edition.cnn.com" },
-    { "name": "BBC News", "url": "https://www.bbc.com/news", "tag": "h2", "root": "https://www.bbc.com" },
-    { "name": "The Guardian (衛報)", "url": "https://www.theguardian.com/international", "tag": "h3", "root": "" },
     { "name": "NPR (美國公共廣播)", "url": "https://www.npr.org/sections/news/", "tag": "h2", "root": "" },
-    { "name": "Al Jazeera (半島電視台)", "url": "https://www.aljazeera.com/news/", "tag": "h3", "root": "https://www.aljazeera.com" },
-    { "name": "Nature (科學期刊)", "url": "https://www.nature.com/news", "tag": "h3", "root": "" },
     { "name": "The New York Times (紐約時報)", "url": "https://www.nytimes.com/section/world", "tag": "h3", "root": "https://www.nytimes.com" },
+    
+    # === 歐洲 ===
+    { "name": "BBC News (英國)", "url": "https://www.bbc.com/news", "tag": "h2", "root": "https://www.bbc.com" },
+    { "name": "The Guardian (衛報)", "url": "https://www.theguardian.com/international", "tag": "h3", "root": "" },
     { "name": "Deutsche Welle (德國之聲)", "url": "https://www.dw.com/en/top-stories/s-9097", "tag": "h3", "root": "https://www.dw.com" },
-    { "name": "El País (國家報)", "url": "https://english.elpais.com/", "tag": "h2", "root": "https://english.elpais.com" },
-    { "name": "Xinhua (新華社)", "url": "https://english.news.cn/", "tag": "span", "root": "" },
+    # 替換: France 24 (403) -> Euronews (好抓)
+    { "name": "Euronews (歐洲新聞台)", "url": "https://www.euronews.com/news/international", "tag": "h3", "root": "https://www.euronews.com" },
+    { "name": "El País (西班牙)", "url": "https://english.elpais.com/", "tag": "h2", "root": "https://english.elpais.com" },
+
+    # === 亞洲與中東 ===
+    { "name": "Al Jazeera (半島電視台)", "url": "https://www.aljazeera.com/news/", "tag": "h3", "root": "https://www.aljazeera.com" },
+    # 替換: Japan Times (JS載入) -> Kyodo News (日本共同社, 結構簡單)
+    { "name": "Kyodo News (日本共同社)", "url": "https://english.kyodonews.net/news/world/", "tag": "h3", "root": "https://english.kyodonews.net" },
     { "name": "SCMP (南華早報)", "url": "https://www.scmp.com/news/world", "tag": "h2", "root": "https://www.scmp.com" },
-    # 新增替代來源
-    { "name": "France 24 (法國)", "url": "https://www.france24.com/en/", "tag": "p", "root": "https://www.france24.com" },
-    { "name": "The Japan Times (日本時報)", "url": "https://www.japantimes.co.jp/news/world/", "tag": "h3", "root": "" }
+    { "name": "Xinhua (新華社)", "url": "https://english.news.cn/", "tag": "span", "root": "" },
+
+    # === 科學 ===
+    { "name": "Nature (科學期刊)", "url": "https://www.nature.com/news", "tag": "h3", "root": "" }
 ]
 
 translator = GoogleTranslator(source='auto', target='zh-TW')
@@ -101,14 +109,16 @@ for source in news_sources:
             soup = BeautifulSoup(response.text, "html.parser")
             items = []
 
+            # --- 網站專屬處理邏輯 (確認這一段是這樣寫的) ---
             if site_name == "CNN":
                 items = soup.find_all("span", class_="container__headline-text") or soup.find_all("span")
             elif site_name == "Xinhua (新華社)":
                 items = soup.find_all("div", class_="tit") or soup.find_all("span")
-            elif site_name == "France 24 (法國)":
-                items = soup.find_all("p", class_="article__title")
+            elif site_name == "Kyodo News (日本共同社)":  # <--- 重點是確認這行有補上去
+                items = soup.find_all("h3") or soup.find_all("div", class_="sec-title")
             else:
                 items = soup.find_all(tag)
+            # -----------------------
             
             count = 0
             seen = set()
