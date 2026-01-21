@@ -1,11 +1,15 @@
 import requests
 from bs4 import BeautifulSoup
 from deep_translator import GoogleTranslator
-import time 
+import time
+import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from datetime import datetime
 
 # --- 設定區 (精選 16 個新聞來源) ---
 news_sources = [
-    # === 原本保留的 7 個 ===
     { "name": "AP News (美聯社)", "url": "https://apnews.com/hub/world-news", "tag": "h3", "root": "https://apnews.com" },
     { "name": "CNN", "url": "https://edition.cnn.com/world", "tag": "span", "root": "https://edition.cnn.com" },
     { "name": "BBC News", "url": "https://www.bbc.com/news", "tag": "h2", "root": "https://www.bbc.com" },
@@ -13,8 +17,6 @@ news_sources = [
     { "name": "NPR (美國公共廣播)", "url": "https://www.npr.org/sections/news/", "tag": "h2", "root": "" },
     { "name": "Al Jazeera (半島電視台)", "url": "https://www.aljazeera.com/news/", "tag": "h3", "root": "https://www.aljazeera.com" },
     { "name": "Nature (科學期刊)", "url": "https://www.nature.com/news", "tag": "h3", "root": "" },
-    
-    # === 新增的 (已移除高防禦網站) ===
     { "name": "The New York Times (紐約時報)", "url": "https://www.nytimes.com/section/world", "tag": "h3", "root": "https://www.nytimes.com" },
     { "name": "The Washington Post (華盛頓郵報)", "url": "https://www.washingtonpost.com/world", "tag": "h2", "root": "" },
     { "name": "Nikkei Asia (日經)", "url": "https://asia.nikkei.com/", "tag": "h4", "root": "https://asia.nikkei.com" }, 
@@ -26,10 +28,8 @@ news_sources = [
     { "name": "SCMP (南華早報)", "url": "https://www.scmp.com/news/world", "tag": "h2", "root": "https://www.scmp.com" }
 ]
 
-# 初始化翻譯器
 translator = GoogleTranslator(source='auto', target='zh-TW')
 
-# --- 偽裝頭 ---
 headers = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -37,108 +37,120 @@ headers = {
     "Referer": "https://www.google.com/"
 }
 
-# --- 步驟 1: 清空舊檔 ---
-print("🧹 正在清空舊的新聞檔案...")
+# 全域變數：用來累積所有要寄出的內容
+full_content = ""
+
+def log_and_save(text):
+    """ 同時打印到螢幕、寫入檔案、並存入 Email 內容緩衝區 """
+    global full_content
+    print(text)
+    full_content += text + "\n"
+    with open("news_report.txt", "a", encoding="utf-8") as file:
+        file.write(text + "\n")
+
+# --- 寄信功能 ---
+def send_email_report():
+    email_user = os.getenv('EMAIL_USER')
+    email_password = os.getenv('EMAIL_PASSWORD')
+
+    if not email_user or not email_password:
+        print("⚠️ 找不到 Email 設定，跳過寄信步驟。")
+        return
+
+    msg = MIMEMultipart()
+    msg['From'] = email_user
+    msg['To'] = email_user  # 寄給自己
+    msg['Subject'] = f"📰 每日新聞快報 ({datetime.now().strftime('%Y-%m-%d')})"
+
+    # 將內容轉為 HTML 格式稍微美化一下
+    html_content = f"""
+    <html>
+      <body>
+        <h2>🌍 你的每日重點新聞</h2>
+        <pre style="font-family: Arial; font-size: 14px;">{full_content}</pre>
+        <hr>
+        <p>Sent by Daily News Bot 🤖</p>
+      </body>
+    </html>
+    """
+    msg.attach(MIMEText(html_content, 'html'))
+
+    try:
+        # 連線到 Gmail 伺服器
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.login(email_user, email_password)
+        server.send_message(msg)
+        server.quit()
+        print("\n📧 Email 寄送成功！請檢查收件匣。")
+    except Exception as e:
+        print(f"\n❌ Email 寄送失敗: {e}")
+
+# --- 主程式 ---
+# 清空舊檔
 with open("news_report.txt", "w", encoding="utf-8") as file:
-    file.write("=== 每日重點新聞彙整 (16 Sources) ===\n\n")
+    file.write("")
 
-# --- 核心功能函數 ---
-def get_news(source_config):
-    url = source_config["url"]
-    tag = source_config["tag"]
-    root_url = source_config["root"]
-    site_name = source_config["name"]
+log_and_save(f"=== 每日重點新聞彙整 ===\n時間: {datetime.now().strftime('%Y-%m-%d %H:%M')}\n")
 
-    print(f"🚀 正在前往 {site_name}...")
+# 開始抓取
+for source in news_sources:
+    site_name = source["name"]
+    url = source["url"]
+    tag = source["tag"]
+    root_url = source["root"]
+    
+    log_and_save(f"🚀 {site_name}...")
     
     try:
         response = requests.get(url, headers=headers, timeout=15)
-        
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, "html.parser")
             items = []
 
-            # --- 網站專屬處理邏輯 ---
             if site_name == "CNN":
-                items = soup.find_all("span", class_="container__headline-text")
-                if not items: items = soup.find_all("span")
-            
+                items = soup.find_all("span", class_="container__headline-text") or soup.find_all("span")
             elif site_name == "Xinhua (新華社)":
-                items = soup.find_all("div", class_="tit") 
-                if not items: items = soup.find_all("span")
-
+                items = soup.find_all("div", class_="tit") or soup.find_all("span")
             elif site_name == "Nikkei Asia (日經)":
                  items = soup.find_all("h4")
-            
             else:
                 items = soup.find_all(tag)
-            # -----------------------
-
-            if len(items) > 0:
-                print(f"   ✅ 成功連線，找到 {len(items)} 個潛在標題")
-            else:
-                print(f"   ⚠️ 連線成功但找不到標題")
-
+            
             count = 0
-            seen_titles = set()
-
+            seen = set()
+            
             for item in items:
                 if count >= 5: break
                 
-                # 抓取連結
-                if tag in ["h2", "h3", "h4", "span", "div"]:
-                    link = item.find_parent("a")
-                    if not link: link = item.find("a")
-                else:
-                    link = item 
+                link = item.find_parent("a") or item.find("a") if tag in ["h2","h3","h4","span","div"] else item
                 
-                # 抓取標題文字
-                headline_en = ""
-                if item.get_text(strip=True):
-                    headline_en = item.get_text(strip=True)
-                elif link and link.get_text(strip=True):
-                    headline_en = link.get_text(strip=True)
-
-                if headline_en and len(headline_en) > 10 and headline_en not in seen_titles:
-                    seen_titles.add(headline_en)
-                    
+                txt = item.get_text(strip=True) or (link.get_text(strip=True) if link else "")
+                
+                if txt and len(txt) > 10 and txt not in seen:
+                    seen.add(txt)
                     try:
-                        headline_zh = translator.translate(headline_en)
-                        print(f"   📰 {headline_zh}")
+                        zh_txt = translator.translate(txt)
                     except:
-                        headline_zh = headline_en
-                        print(f"   📰 {headline_zh} (翻譯略過)")
+                        zh_txt = txt
                     
-                    if link:
-                        link_url = link.get("href")
-                        if link_url:
-                            if not link_url.startswith("http"):
-                                link_url = root_url + link_url
-                            
-                            with open("news_report.txt", "a", encoding="utf-8") as file:
-                                file.write(f"【{site_name}】{headline_zh}\n{link_url}\n\n")
-                            
-                            count += 1
+                    link_url = link.get("href") if link else ""
+                    if link_url and not link_url.startswith("http"):
+                        link_url = root_url + link_url
+                    
+                    log_and_save(f"   📰 {zh_txt}")
+                    log_and_save(f"   🔗 {link_url}\n")
+                    count += 1
             
-            if count == 0 and response.status_code == 200:
-                print("   ⚠️ 沒抓到符合條件的新聞。")
-
+            if count == 0: log_and_save("   ⚠️ 未抓到新聞")
         else:
-            if response.status_code in [401, 403]:
-                print(f"   🚫 被阻擋 (Error {response.status_code}): 該網站有嚴格防爬蟲機制")
-            else:
-                print(f"   ❌ 連線失敗: {response.status_code}")
-
+            log_and_save(f"   ❌ 連線失敗: {response.status_code}")
+            
     except Exception as e:
-        print(f"   ❌ 發生錯誤: {e}")
-
-    print("-" * 30)
+        log_and_save(f"   ❌ 錯誤: {e}")
+    
+    log_and_save("-" * 30)
     time.sleep(1)
 
-# --- 主程式區 (不需要 while loop，也不需要 job 函數包裝) ---
-print(f"⏰ 開始執行每日新聞抓取... 現在時間: {time.strftime('%H:%M:%S')}")
-
-for source in news_sources:
-    get_news(source)
-
-print("💤 任務完成！")
+# 最後寄出 Email
+send_email_report()
+print("💤 任務全部完成！")
