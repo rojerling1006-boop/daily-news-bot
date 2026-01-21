@@ -8,31 +8,30 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime
 
-# --- 設定區 (精選穩定來源 14 個 - 已修復歐洲與日本來源) ---
+# --- 設定區 (修正版: 修復衛報連結與共同社 404) ---
 news_sources = [
     # === 美洲 ===
     { "name": "AP News (美聯社)", "url": "https://apnews.com/hub/world-news", "tag": "h3", "root": "https://apnews.com" },
     { "name": "CNN", "url": "https://edition.cnn.com/world", "tag": "span", "root": "https://edition.cnn.com" },
-    { "name": "NPR (美國公共廣播)", "url": "https://www.npr.org/sections/news/", "tag": "h2", "root": "" },
+    { "name": "NPR (美國公共廣播)", "url": "https://www.npr.org/sections/news/", "tag": "h2", "root": "https://www.npr.org" },
     { "name": "The New York Times (紐約時報)", "url": "https://www.nytimes.com/section/world", "tag": "h3", "root": "https://www.nytimes.com" },
     
     # === 歐洲 ===
     { "name": "BBC News (英國)", "url": "https://www.bbc.com/news", "tag": "h2", "root": "https://www.bbc.com" },
-    { "name": "The Guardian (衛報)", "url": "https://www.theguardian.com/international", "tag": "h3", "root": "" },
+    { "name": "The Guardian (衛報)", "url": "https://www.theguardian.com/international", "tag": "h3", "root": "https://www.theguardian.com" },
     { "name": "Deutsche Welle (德國之聲)", "url": "https://www.dw.com/en/top-stories/s-9097", "tag": "h3", "root": "https://www.dw.com" },
-    # 替換: France 24 (403) -> Euronews (好抓)
     { "name": "Euronews (歐洲新聞台)", "url": "https://www.euronews.com/news/international", "tag": "h3", "root": "https://www.euronews.com" },
     { "name": "El País (西班牙)", "url": "https://english.elpais.com/", "tag": "h2", "root": "https://english.elpais.com" },
 
     # === 亞洲與中東 ===
     { "name": "Al Jazeera (半島電視台)", "url": "https://www.aljazeera.com/news/", "tag": "h3", "root": "https://www.aljazeera.com" },
-    # 替換: Japan Times (JS載入) -> Kyodo News (日本共同社, 結構簡單)
-    { "name": "Kyodo News (日本共同社)", "url": "https://english.kyodonews.net/news/world/", "tag": "h3", "root": "https://english.kyodonews.net" },
+    # 修正 Kyodo 網址 (原本 /news/world/ 改為 /news/)
+    { "name": "Kyodo News (日本共同社)", "url": "https://english.kyodonews.net/news/", "tag": "h3", "root": "https://english.kyodonews.net" },
     { "name": "SCMP (南華早報)", "url": "https://www.scmp.com/news/world", "tag": "h2", "root": "https://www.scmp.com" },
-    { "name": "Xinhua (新華社)", "url": "https://english.news.cn/", "tag": "span", "root": "" },
+    { "name": "Xinhua (新華社)", "url": "https://english.news.cn/", "tag": "span", "root": "http://english.news.cn" },
 
     # === 科學 ===
-    { "name": "Nature (科學期刊)", "url": "https://www.nature.com/news", "tag": "h3", "root": "" }
+    { "name": "Nature (科學期刊)", "url": "https://www.nature.com/news", "tag": "h3", "root": "https://www.nature.com" }
 ]
 
 translator = GoogleTranslator(source='auto', target='zh-TW')
