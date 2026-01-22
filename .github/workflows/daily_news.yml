@@ -2,7 +2,7 @@ name: Daily News Bot 🤖
 
 on:
   schedule:
-    - cron: '0 0 * * *' # 每天 UTC 00:00 (台灣 08:00)
+    - cron: '15 0 * * *' # 每天 UTC 00:00 (台灣 08:00)
   workflow_dispatch:      # 允許手動測試
 
 jobs:
