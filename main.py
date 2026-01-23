@@ -26,7 +26,6 @@ news_sources = [
     # === 亞洲與中東 ===
     { "name": "Al Jazeera (半島電視台)", "url": "https://www.aljazeera.com/news/", "tag": "h3", "root": "https://www.aljazeera.com" },
     # 修正 Kyodo 網址 (原本 /news/world/ 改為 /news/)
-    { "name": "Kyodo News (日本共同社)", "url": "https://english.kyodonews.net/news/", "tag": "h3", "root": "https://english.kyodonews.net" },
     { "name": "SCMP (南華早報)", "url": "https://www.scmp.com/news/world", "tag": "h2", "root": "https://www.scmp.com" },
     { "name": "Xinhua (新華社)", "url": "https://english.news.cn/", "tag": "span", "root": "http://english.news.cn" },
 
