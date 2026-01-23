@@ -2,7 +2,7 @@ name: Daily News Bot 🤖
 
 on:
   schedule:
-    - cron: '15 0 * * *' # 每天 UTC 00:00 (台灣 08:00)
+    - cron: '15 0 * * *'  # 每天 UTC 00:15 (台灣 08:15)
   workflow_dispatch:      # 允許手動測試
 
 jobs:
@@ -23,7 +23,6 @@ jobs:
           pip install requests beautifulsoup4 deep-translator
 
       - name: Run bot
-        # 🔑 這裡就是關鍵！我們把 Secrets 變成環境變數傳給 Python
         env:
           EMAIL_USER: ${{ secrets.EMAIL_USER }}
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
